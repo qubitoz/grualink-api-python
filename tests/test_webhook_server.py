@@ -64,6 +64,8 @@ class WebhookServerTests(unittest.TestCase):
     result_headers: list[dict[str, str]]
     fail_next = False
     clock = NOW
+    # on_result runs after the answer was sent; post() waits for it so the tests can read the outcome.
+    reported = threading.Semaphore(0)
 
     @classmethod
     def setUpClass(cls) -> None:
@@ -76,6 +78,7 @@ class WebhookServerTests(unittest.TestCase):
         def on_result(result: WebhookHandlerResult, headers: Any) -> None:
             cls.results.append(result)
             cls.result_headers.append(dict(headers))
+            cls.reported.release()
 
         listener = create_webhook_listener(
             path=PATH,
@@ -125,9 +128,12 @@ class WebhookServerTests(unittest.TestCase):
                 )
             else:
                 connection.request(method, path, body=body if method == "POST" else None, headers=headers)
-            return Response(connection.getresponse())
+            response = Response(connection.getresponse())
         finally:
             connection.close()
+        if response.status not in (404, 405, 413):
+            self.assertTrue(self.reported.acquire(timeout=5), "on_result was not called")
+        return response
 
     def test_a_signed_delivery_is_accepted_and_handed_to_on_event(self) -> None:
         d = Delivery()
