@@ -1,0 +1,33 @@
+[project]
+name = "grualink-api-python"
+version = "0.1.0"
+description = "Example integration with the GRUALINK public API in Python: minimal client, signed webhook receiver and shared contract kit."
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.10"
+dependencies = []
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["grualink"]
+
+[tool.ruff]
+line-length = 110
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "S", "SIM", "RUF"]
+ignore = [
+  "S101", # assert is how the tests narrow types
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["S"]
+
+[tool.mypy]
+python_version = "3.10"
+strict = true
+files = ["grualink", "examples", "scripts", "tests"]
